@@ -22,7 +22,7 @@ module Githubwatcher
     unless File.exist?(WATCH)
       warn "Add the repositories you're willing to monitor editing: ~/.githubwatcher/repos.yaml"
       Dir.mkdir(File.dirname(WATCH)) unless File.exist?(File.dirname(WATCH))
-      File.open(WATCH, "w") { |f| f.write ["daddye/all", "padrino/all"].to_yaml }
+      File.open(WATCH, "w") { |f| f.write ["nlalonde/all", "AvidLifeMedia/all"].to_yaml }
     end
 
     @_watch = YAML.load_file(WATCH)
@@ -36,7 +36,13 @@ module Githubwatcher
       r = get "/users/%s/repos" % key
       r.each do |repo|
         next unless value.include?(repo["name"]) || value.include?("all")
-        puts "Quering #{repo["git_url"]}..."
+        puts "Querying #{repo["git_url"]}..."
+
+        
+
+        puts "repo.inspect: #{repo.inspect}"
+
+
 
         found = repos_was.find { |r| r["name"] == repo["name"] }
 
