@@ -74,6 +74,7 @@ module Githubwatcher
         if repo_was["pushed_at"] != repo["pushed_at"]
           notify(repo_fullname, "Was updated!")
           repo_was["pushed_at"] = repo["pushed_at"]
+          new_commits(key, repo["name"])
         end
 
         if repo_was["forks"] != repo["forks"]
@@ -99,6 +100,20 @@ module Githubwatcher
 
   def http_options
     @auth || {}
+  end
+
+  def new_commits(user_name, repo_name)
+    r = get("/repos/#{user_name}/#{repo_name}/commits", http_options)
+
+    commit = r.first
+    c = {}
+    c[:sha] = commit["sha"]
+    c[:login] = commit["author"]["login"]
+    c[:message] = commit["commit"]["message"]
+
+    puts c.inspect
+
+    c
   end
 
   def notify(title, text)
