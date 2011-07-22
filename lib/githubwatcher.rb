@@ -11,6 +11,7 @@ module Githubwatcher
 
   WATCH = File.expand_path("~/.githubwatcher/repos.yaml")
   DB    = File.expand_path("~/.githubwatcher/db.yaml")
+  AUTH  = File.expand_path("~/.githubwatcher/auth.yaml")
 
   base_uri 'https://api.github.com'
   format :json
@@ -25,24 +26,26 @@ module Githubwatcher
       File.open(WATCH, "w") { |f| f.write ["nlalonde/all", "AvidLifeMedia/all"].to_yaml }
     end
 
+    unless File.exist?(AUTH)
+      warn "Add your github credentials to this file: ~/.githubwatcher/auth.yaml"
+      Dir.mkdir(File.dirname(AUTH)) unless File.exist?(File.dirname(AUTH))
+      File.open(AUTH, "w") { |f| f.write ["username: xxx", "password: xxx"].to_yaml }
+    end
+
     @_watch = YAML.load_file(WATCH)
     @_repos = YAML.load_file(DB) if File.exist?(DB)
+    auth_config = YAML.load_file(AUTH) if File.exist?(AUTH)
+    @auth = {:username => auth_config["username"], :password => auth_config["password"]}
   end
 
   def start!
     repos_was = repos.dup
     watch.each do |value|
       key, value = *value.split("/")
-      r = get "/users/%s/repos" % key
+      r = get("/users/%s/repos", http_options) % key
       r.each do |repo|
         next unless value.include?(repo["name"]) || value.include?("all")
         puts "Querying #{repo["git_url"]}..."
-
-        
-
-        puts "repo.inspect: #{repo.inspect}"
-
-
 
         found = repos_was.find { |r| r["name"] == repo["name"] }
 
@@ -89,6 +92,10 @@ module Githubwatcher
 
   def watch
     @_watch ||= []
+  end
+
+  def http_options
+    @auth || {}
   end
 
   def notify(title, text)
