@@ -39,6 +39,8 @@ module Githubwatcher
       puts auth_config.inspect
       @auth = {:username => auth_config["username"], :password => auth_config["password"]}
     end
+
+    @commits = {}
   end
 
   def start!
@@ -74,7 +76,13 @@ module Githubwatcher
         if repo_was["pushed_at"] != repo["pushed_at"]
           notify(repo_fullname, "Was updated!")
           repo_was["pushed_at"] = repo["pushed_at"]
-          new_commits(key, repo["name"])
+          commits = new_commits(key, repo["name"])
+          commits.each do |commit|
+            notify(
+              "#{repo['name']}: #{commit[:login]}",
+              "Commit: #{commit[:message]}"
+            )
+          end
         end
 
         if repo_was["forks"] != repo["forks"]
@@ -103,17 +111,40 @@ module Githubwatcher
   end
 
   def new_commits(user_name, repo_name)
-    r = get("/repos/#{user_name}/#{repo_name}/commits", http_options)
+    last_sha = last_known_sha(user_name, repo_name)
 
-    commit = r.first
-    c = {}
-    c[:sha] = commit["sha"]
-    c[:login] = commit["author"]["login"]
-    c[:message] = commit["commit"]["message"]
+    r = last_sha ? get("/repos/#{user_name}/#{repo_name}/commits?sha=#{last_sha}", http_options) : get("/repos/#{user_name}/#{repo_name}/commits", http_options)
 
-    puts c.inspect
+    commits = r.map do |commit|
+      {
+        :sha => commit["sha"],
+        :login => commit["author"]["login"],
+        :message => commit["commit"]["message"]
+      }
+    end
 
-    c
+    set_last_known_sha(user_name, repo_name, commits.last[:sha])
+
+    commits
+  end
+
+  def last_known_sha(user, repo)
+    unless defined?(@commits)
+      @commits = {}
+      return nil
+    end
+    @commits[repo_key(user,repo)] ? @commits[repo_key(user,repo)][:last_sha] : nil
+  end
+
+  def set_last_known_sha(user, repo, sha)
+    unless @commits[repo_key(user,repo)]
+      @commits[repo_key(user,repo)] = {}
+    end
+    @commits[repo_key(user,repo)][:last_sha] = sha
+  end
+
+  def repo_key(user, repo)
+    "#{user}/#{repo}"
   end
 
   def notify(title, text)
