@@ -2,6 +2,7 @@ require 'yaml' unless defined?(YAML)
 require "githubwatcher/version"
 require "httparty"
 require "growl"
+require 'date'
 
 YAML::ENGINE.yamler = "syck" if defined?(YAML::ENGINE)
 
@@ -111,36 +112,39 @@ module Githubwatcher
   end
 
   def new_commits(user_name, repo_name)
-    last_sha = last_known_sha(user_name, repo_name)
+    last_updated_at = last_update_time(user_name, repo_name)
 
-    r = last_sha ? get("/repos/#{user_name}/#{repo_name}/commits?sha=#{last_sha}", http_options) : get("/repos/#{user_name}/#{repo_name}/commits", http_options)
+    r = get("/repos/#{user_name}/#{repo_name}/commits?per_page=10", http_options)
 
-    commits = r.map do |commit|
+    commits = commits.map do |commit|
       {
         :sha => commit["sha"],
         :login => commit["author"]["login"],
-        :message => commit["commit"]["message"]
+        :message => commit["commit"]["message"],
+        :committed_at => DateTime.parse( commit["commit"]["committer"]["date"] )
       }
     end
 
-    set_last_known_sha(user_name, repo_name, commits.last[:sha])
+    commits = r.reject {|commit| commit[:committed_at] < last_updated_at } unless last_updated_at.nil?
+
+    set_last_update_time(user_name, repo_name, commits.first[:committed_at]) unless commits.empty?
 
     commits
   end
 
-  def last_known_sha(user, repo)
+  def last_update_time(user, repo)
     unless defined?(@commits)
       @commits = {}
       return nil
     end
-    @commits[repo_key(user,repo)] ? @commits[repo_key(user,repo)][:last_sha] : nil
+    @commits[repo_key(user,repo)] ? @commits[repo_key(user,repo)][:last_updated_at] : nil
   end
 
-  def set_last_known_sha(user, repo, sha)
+  def set_last_update_time(user, repo, time)
     unless @commits[repo_key(user,repo)]
       @commits[repo_key(user,repo)] = {}
     end
-    @commits[repo_key(user,repo)][:last_sha] = sha
+    @commits[repo_key(user,repo)][:last_updated_at] = time
   end
 
   def repo_key(user, repo)
