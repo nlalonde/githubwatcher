@@ -81,7 +81,7 @@ module Githubwatcher
           commits.each do |commit|
             notify(
               "#{repo['name']}: Commit by #{commit[:login]}",
-              "Commit: #{commit[:message]}"
+              "#{commit[:message]}"
             )
           end
         end
