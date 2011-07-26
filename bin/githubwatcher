@@ -29,7 +29,7 @@ Forever.run do
     Githubwatcher.notify("GitHub Watcher", "was stopped...")
   end
 
-  every 5.seconds do
+  every 30.seconds do
     Githubwatcher.run
   end
 end
