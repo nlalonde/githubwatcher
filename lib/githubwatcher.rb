@@ -80,7 +80,7 @@ module Githubwatcher
           commits = new_commits(key, repo["name"])
           commits.each do |commit|
             notify(
-              "#{repo['name']}: Commit by #{commit[:login]}",
+              "#{commit[:login]} committed to #{repo['name']}",
               "#{commit[:message]}"
             )
           end
