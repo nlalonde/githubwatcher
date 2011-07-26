@@ -75,7 +75,6 @@ module Githubwatcher
         end
 
         if repo_was["pushed_at"] != repo["pushed_at"]
-          #notify(repo_fullname, "Was updated!")
           repo_was["pushed_at"] = repo["pushed_at"]
           commits = new_commits(key, repo["name"])
           commits.each do |commit|
