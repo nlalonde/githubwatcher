@@ -80,7 +80,7 @@ module Githubwatcher
           commits = new_commits(key, repo["name"])
           commits.each do |commit|
             notify(
-              "#{repo['name']}: #{commit[:login]}",
+              "#{repo['name']}: Commit by #{commit[:login]}",
               "Commit: #{commit[:message]}"
             )
           end
@@ -121,7 +121,7 @@ module Githubwatcher
         :sha => commit["sha"],
         :login => commit["author"]["login"],
         :message => commit["commit"]["message"],
-        :committed_at => DateTime.parse( commit["commit"]["committer"]["date"] )
+        :committed_at => commit["commit"]["committer"]["date"]
       }
     end
 
