@@ -116,7 +116,7 @@ module Githubwatcher
 
     r = get("/repos/#{user_name}/#{repo_name}/commits?per_page=10", http_options)
 
-    commits = commits.map do |commit|
+    commits = r.map do |commit|
       {
         :sha => commit["sha"],
         :login => commit["author"]["login"],
@@ -125,7 +125,7 @@ module Githubwatcher
       }
     end
 
-    commits = r.reject {|commit| commit[:committed_at] < last_updated_at } unless last_updated_at.nil?
+    commits = commit.reject {|commit| commit[:committed_at] < last_updated_at } unless last_updated_at.nil?
 
     set_last_update_time(user_name, repo_name, commits.first[:committed_at]) unless commits.empty?
 
