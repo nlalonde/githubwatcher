@@ -4,6 +4,7 @@ require "httparty"
 require "growl"
 require 'date'
 
+
 YAML::ENGINE.yamler = "syck" if defined?(YAML::ENGINE)
 
 module Githubwatcher
