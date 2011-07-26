@@ -125,7 +125,7 @@ module Githubwatcher
       }
     end
 
-    commits.reject! {|commit| commit[:committed_at] < last_updated_at } unless last_updated_at.nil?
+    commits.reject! {|commit| commit[:committed_at] <= last_updated_at } unless last_updated_at.nil?
 
     set_last_update_time(user_name, repo_name, commits.first[:committed_at]) unless commits.empty?
 
